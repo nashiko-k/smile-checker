@@ -1,0 +1,60 @@
+{
+  "expo": {
+    "name": "笑顔チェッカー",
+    "slug": "smile-checker",
+    "scheme": "smilechecker",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.nashiko.smilechecker",
+      "infoPlist": {
+        "NSCameraUsageDescription": "笑顔を検出するためにカメラを使用します。"
+      }
+    },
+    "android": {
+      "package": "com.nashiko.smilechecker",
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
+    },
+    "assetBundlePatterns": [
+      "assets/**/*"
+    ],
+    "plugins": [
+      "expo-router",
+      [
+        "react-native-vision-camera",
+        {
+          "cameraPermissionText": "笑顔を検出するためにカメラを使用します。",
+          "enableMicrophonePermission": false,
+          "enableCodeScanner": false
+        }
+      ],
+      [
+        "react-native-fast-tflite",
+        {
+          "enableCoreMLDelegate": false,
+          "enableAndroidGpuLibraries": false
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "16.0"
+          },
+          "android": {
+            "minSdkVersion": 26
+          }
+        }
+      ],
+      "expo-asset"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
