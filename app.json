@@ -12,7 +12,8 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.nashiko.smilechecker",
       "infoPlist": {
-        "NSCameraUsageDescription": "笑顔を検出するためにカメラを使用します。"
+        "NSCameraUsageDescription": "笑顔を検出するためにカメラを使用します。",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -62,6 +63,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "e6ba2093-8e6e-430b-abc9-4584d8126d88"
+      }
+    },
+    "owner": "nashiko"
   }
 }

@@ -2,8 +2,20 @@
 // 1024x1024 のアプリアイコンを生成して assets/icon.png に書き出す。
 // components/BrandMark.tsx の SVG をそのまま 5倍スケールして中央配置、
 // 背景はピンクの縦グラデーション（#FFE0E8 → #FF85A2）。
+//
+// 使い方（sharp はアプリ本体に不要なため package.json には含めない）:
+//   npm install --no-save sharp
+//   node scripts/generate-icon.mjs
 
-import sharp from 'sharp';
+let sharp;
+try {
+  sharp = (await import('sharp')).default;
+} catch {
+  console.error(
+    "sharp が見つかりません。まず `npm install --no-save sharp` を実行してください。",
+  );
+  process.exit(1);
+}
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
