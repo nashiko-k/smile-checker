@@ -16,6 +16,12 @@ export const colors = {
   white: '#FFFFFF',
   error: '#E66B6B',
   shadow: 'rgba(255,133,162,0.12)',
+  // 水色アクセント（情報チップ・スプラッシュ装飾の一部に控えめ使用）
+  sky: '#7FC4DC',
+  skySoft: '#C9E6F0',
+  skyLightest: '#EFF7FB',
+  skyDeep: '#4A93B0',
+  flower: '#E0CFE8',
 } as const;
 
 export const radius = {

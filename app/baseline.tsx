@@ -25,6 +25,7 @@ import { useTensorflowModel } from 'react-native-fast-tflite';
 import { useResizePlugin } from 'vision-camera-resize-plugin';
 import { saveBaseline } from '../lib/baseline';
 import { trimmedMedian } from '../lib/measure';
+import { beautifyPhoto } from '../lib/beautify';
 import { colors, radius } from '../lib/theme';
 
 const AGE_INPUT_SIZE = 200;
@@ -205,7 +206,10 @@ export default function BaselineScreen() {
         rightEye: trimmedMedian(valid.map((s) => s.rightEye)),
       };
 
-      setResult({ photoPath: photo.path, analysis });
+      // 表示・保存用に美肌処理（解析は元画像ベースで完了済み）
+      const beautifiedUri = await beautifyPhoto(photo.path, photo.width);
+
+      setResult({ photoPath: beautifiedUri, analysis });
       setPhase('result');
     } catch (e) {
       measuring.value = false;
@@ -344,6 +348,7 @@ export default function BaselineScreen() {
           frameProcessor={frameProcessor}
           pixelFormat="yuv"
         />
+        <View pointerEvents="none" style={styles.softFocus} />
 
         <View pointerEvents="none" style={styles.guideContainer}>
           <View style={styles.guideOval} />
@@ -465,6 +470,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.bgMain,
   },
+  softFocus: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
   guideContainer: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
@@ -522,8 +531,8 @@ const styles = StyleSheet.create({
   },
   countdownNumber: {
     color: colors.white,
-    fontSize: 140,
-    fontWeight: '600',
+    fontSize: 88,
+    fontWeight: '500',
   },
   progressBarBg: {
     width: 220,
@@ -588,14 +597,16 @@ const styles = StyleSheet.create({
     width: '100%',
   },
 
-  // ボタン
+  // ボタン (ベース高さ ~48px / フォント 16)
   primaryBtn: {
     backgroundColor: colors.primary,
     paddingHorizontal: 32,
-    paddingVertical: 16,
+    paddingVertical: 14,
+    minHeight: 48,
     borderRadius: radius.pill,
     minWidth: 220,
     alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
@@ -613,16 +624,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     paddingHorizontal: 24,
     paddingVertical: 14,
+    minHeight: 48,
     borderRadius: radius.pill,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   outlinedBtnText: {
     color: colors.primaryDeep,
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
   },
   btnDisabled: { opacity: 0.5 },
-  flex1: { flex: 1 },
+  flex1: { flex: 1, minWidth: 140 },
 
   msg: {
     color: colors.textDark,

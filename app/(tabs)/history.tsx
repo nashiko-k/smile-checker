@@ -30,11 +30,11 @@ import {
 import { loadProfile, type UserProfile } from '../../lib/profile';
 import {
   combinedHeartCount,
-  heartsString,
   smileFeedbackFromProb,
   youngScoreFromDiff,
 } from '../../lib/smile';
 import { colors, radius } from '../../lib/theme';
+import { HeartRow } from '../../components/HeartRow';
 
 LocaleConfig.locales.ja = {
   monthNames: [
@@ -577,7 +577,9 @@ function EntryCard({
             顔年齢: {Math.round(entry.faceAge)}歳
           </Text>
           {diffLabel && <Text style={styles.entryDiff}>{diffLabel}</Text>}
-          <Text style={styles.entryHearts}>{heartsString(totalHearts)}</Text>
+          <View style={styles.entryHearts}>
+            <HeartRow filled={totalHearts} size={18} gap={3} />
+          </View>
         </View>
       </View>
     </View>
@@ -660,7 +662,8 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: radius.md,
-    backgroundColor: colors.primaryLightest,
+    backgroundColor: colors.white,
+    opacity: 0.95,
   },
   entryImagePlaceholder: {
     alignItems: 'center',
@@ -676,7 +679,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 6,
   },
-  entryHearts: { fontSize: 20, letterSpacing: 2 },
+  entryHearts: { marginTop: 4 },
   retakeBtn: {
     backgroundColor: colors.primary,
     paddingVertical: 12,

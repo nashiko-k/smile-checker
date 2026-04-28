@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
-  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -32,12 +31,17 @@ import { loadProfile, type UserProfile } from '../../lib/profile';
 import {
   combinedHeartCount,
   getCombinedFeedback,
-  heartsString,
   smileFeedbackFromProb,
   youngScoreFromDiff,
 } from '../../lib/smile';
 import { trimmedMedian } from '../../lib/measure';
+import { beautifyPhoto } from '../../lib/beautify';
+import { incrementCaptureCount, shouldShowInterstitial } from '../../lib/ads';
+import { maybeShowInterstitial } from '../../lib/interstitial';
 import { colors, radius } from '../../lib/theme';
+import { BrandMark } from '../../components/BrandMark';
+import { HeartRow } from '../../components/HeartRow';
+import { ResultBackgroundWash } from '../../components/ResultBackgroundWash';
 
 const AGE_INPUT_SIZE = 200;
 const AGE_SCALE = 116;
@@ -260,6 +264,9 @@ export default function CheckScreen() {
         rightEye: finalRightEye,
       };
 
+      // 表示・保存用に美肌処理を適用（解析は元画像ベースで完了済み）
+      const beautifiedUri = await beautifyPhoto(photo.path, photo.width);
+
       const faceAge = Math.round(finalAge);
       const actualAge = profile?.actualAge;
       // 実年齢未設定なら youngScore=3（中立）として組み合わせメッセージを抽選
@@ -268,7 +275,7 @@ export default function CheckScreen() {
       const smile = smileFeedbackFromProb(finalSmile);
       const combinedMessage = getCombinedFeedback(ys, smile.filledHearts);
 
-      setResult({ photoPath: photo.path, analysis, combinedMessage });
+      setResult({ photoPath: beautifiedUri, analysis, combinedMessage });
       setSaved(false);
       setPhase('result');
     } catch (e) {
@@ -305,6 +312,13 @@ export default function CheckScreen() {
       setResult(null);
       setPhase('standby');
       setSaved(false);
+
+      // 撮影回数 +1。10回ごとにインタースティシャル広告を試みる（読み込み済みなら表示）。
+      const count = await incrementCaptureCount();
+      if (shouldShowInterstitial(count)) {
+        await maybeShowInterstitial();
+      }
+
       router.push({ pathname: '/history', params: { flash: entry.date } });
     } catch (e) {
       setSaved(false);
@@ -402,13 +416,8 @@ export default function CheckScreen() {
 
     return (
       <View style={styles.resultContainer}>
-        <Image
-          source={{ uri: `file://${result.photoPath}` }}
-          style={styles.resultImage}
-          resizeMode="cover"
-        />
-        <View style={styles.resultWash} pointerEvents="none" />
-        <View style={styles.resultContent}>
+        <ResultBackgroundWash />
+        <View style={styles.resultBody}>
           <View style={styles.factBlock}>
             <Text style={styles.factLabel}>きょうの顔年齢は</Text>
             <View style={styles.factAgeRow}>
@@ -435,35 +444,35 @@ export default function CheckScreen() {
             </View>
           )}
 
-          <Text style={styles.totalHearts}>{heartsString(totalHearts)}</Text>
+          <HeartRow filled={totalHearts} size={36} gap={6} />
 
           {result.combinedMessage.length > 0 && (
             <Text style={styles.combinedMessage}>
               {result.combinedMessage}
             </Text>
           )}
+        </View>
 
-          <View style={styles.resultActions}>
-            <TouchableOpacity
-              style={[styles.outlinedBtn, styles.actionBtn]}
-              onPress={handleRetake}
-            >
-              <Text style={styles.outlinedBtnText}>もう一度</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.primaryBtn,
-                styles.actionBtn,
-                saved && styles.btnDisabled,
-              ]}
-              onPress={handleSaveHistory}
-              disabled={saved}
-            >
-              <Text style={styles.primaryBtnText}>
-                {saved ? '保存中...' : '保存する'}
-              </Text>
-            </TouchableOpacity>
-          </View>
+        <View style={styles.resultActions}>
+          <TouchableOpacity
+            style={[styles.outlinedBtn, styles.actionBtn]}
+            onPress={handleRetake}
+          >
+            <Text style={styles.outlinedBtnText}>もう一度</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.primaryBtn,
+              styles.actionBtn,
+              saved && styles.btnDisabled,
+            ]}
+            onPress={handleSaveHistory}
+            disabled={saved}
+          >
+            <Text style={styles.primaryBtnText}>
+              {saved ? '保存中...' : '保存する'}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -488,9 +497,12 @@ export default function CheckScreen() {
       />
 
       {(phase === 'countdown' || phase === 'measuring') && (
-        <View pointerEvents="none" style={styles.guideContainer}>
-          <View style={styles.guideOval} />
-        </View>
+        <>
+          <View pointerEvents="none" style={styles.softFocus} />
+          <View pointerEvents="none" style={styles.guideContainer}>
+            <View style={styles.guideOval} />
+          </View>
+        </>
       )}
 
       {phase === 'countdown' && (
@@ -517,9 +529,8 @@ export default function CheckScreen() {
       {phase === 'standby' && (
         <View style={styles.standbyOverlay}>
           <View style={styles.standbyCard}>
-            <View style={styles.standbyIconCircle}>
-              <Text style={styles.standbyIconText}>📷</Text>
-              <Text style={styles.standbyIconSmile}>😊</Text>
+            <View style={styles.standbyMark}>
+              <BrandMark size={88} />
             </View>
             <Text style={styles.standbyTitle}>
               きょうの顔年齢、何歳かな？
@@ -575,22 +586,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.primaryLighter,
   },
-  standbyIconCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 22,
-  },
-  standbyIconText: { fontSize: 40 },
-  standbyIconSmile: {
-    position: 'absolute',
-    bottom: 12,
-    right: 14,
-    fontSize: 22,
-  },
+  standbyMark: { marginBottom: 22 },
   standbyTitle: {
     color: colors.textDark,
     fontSize: 18,
@@ -637,14 +633,16 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
 
-  // ボタン
+  // ボタン (ベース高さ ~48px / フォント 16)
   primaryBtn: {
     backgroundColor: colors.primary,
     paddingHorizontal: 32,
-    paddingVertical: 16,
+    paddingVertical: 14,
+    minHeight: 48,
     borderRadius: radius.pill,
     minWidth: 220,
     alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
@@ -662,21 +660,27 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     paddingHorizontal: 24,
     paddingVertical: 14,
+    minHeight: 48,
     borderRadius: radius.pill,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   outlinedBtnText: {
     color: colors.primaryDeep,
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
   },
   btnDisabled: { opacity: 0.5 },
   actionBtn: {
     flex: 1,
-    minWidth: 120,
+    minWidth: 140,
   },
 
   // カウントダウン / 撮影中
+  softFocus: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
   guideContainer: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
@@ -703,8 +707,8 @@ const styles = StyleSheet.create({
   },
   countdownNumber: {
     color: colors.white,
-    fontSize: 140,
-    fontWeight: '600',
+    fontSize: 88,
+    fontWeight: '500',
   },
   progressBarBg: {
     width: 220,
@@ -729,23 +733,22 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
 
-  // 結果画面
-  resultContainer: { flex: 1, backgroundColor: colors.bgMain },
-  resultImage: { ...StyleSheet.absoluteFillObject },
-  resultWash: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.85)',
-  },
-  resultContent: {
-    ...StyleSheet.absoluteFillObject,
+  // 結果画面（白背景・写真は表示しない）
+  resultContainer: {
+    flex: 1,
+    backgroundColor: colors.bgMain,
     paddingHorizontal: 24,
-    paddingTop: 80,
-    paddingBottom: 48,
+    paddingTop: 64,
+    paddingBottom: 32,
+  },
+  resultBody: {
+    flex: 1,
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    gap: 28,
   },
   factBlock: { alignItems: 'center' },
-  factLabel: { color: colors.textMid, fontSize: 14 },
+  factLabel: { color: colors.textMid, fontSize: 14, fontWeight: '400' },
   factAgeRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -754,20 +757,20 @@ const styles = StyleSheet.create({
   factAge: {
     color: colors.primary,
     fontSize: 56,
-    fontWeight: '600',
+    fontWeight: '500',
     lineHeight: 60,
   },
   factAgeUnit: {
     color: colors.textDark,
     fontSize: 18,
-    fontWeight: '500',
-    marginLeft: 4,
-    marginBottom: 8,
+    fontWeight: '400',
+    marginLeft: 6,
+    marginBottom: 10,
   },
   diffPill: {
     backgroundColor: colors.primaryLighter,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
+    paddingHorizontal: 22,
+    paddingVertical: 12,
     borderRadius: radius.pill,
     alignSelf: 'center',
   },
@@ -778,24 +781,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
   },
-  totalHearts: {
-    fontSize: 36,
-    letterSpacing: 3,
-    textAlign: 'center',
-  },
   combinedMessage: {
     color: colors.textDark,
-    fontSize: 18,
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '400',
     textAlign: 'center',
-    lineHeight: 26,
+    lineHeight: 24,
     paddingHorizontal: 8,
   },
   resultActions: {
     flexDirection: 'row',
     gap: 12,
     width: '100%',
-    marginTop: 4,
   },
   msg: {
     color: colors.textDark,

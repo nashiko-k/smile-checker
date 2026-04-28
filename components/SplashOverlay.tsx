@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../lib/theme';
+import { BrandMark } from './BrandMark';
+import { Flower, Sparkle } from './decorations';
 
 export function SplashOverlay({ onDone }: { onDone: () => void }) {
   const fade = useRef(new Animated.Value(1)).current;
@@ -26,12 +28,49 @@ export function SplashOverlay({ onDone }: { onDone: () => void }) {
         colors={['#FFE0E8', '#FFF0F5', '#F8F4FF']}
         style={StyleSheet.absoluteFill}
       />
+
+      {/* 装飾：きらきら + お花 */}
+      <View
+        pointerEvents="none"
+        style={[styles.deco, { top: 110, left: 56, opacity: 0.55 }]}
+      >
+        <Sparkle size={20} color="#FFB6C1" />
+      </View>
+      <View
+        pointerEvents="none"
+        style={[styles.deco, { top: 180, right: 60, opacity: 0.55 }]}
+      >
+        <Sparkle size={14} color="#FFB6C1" />
+      </View>
+      <View
+        pointerEvents="none"
+        style={[styles.deco, { top: 240, left: 38, opacity: 0.4 }]}
+      >
+        <Flower size={26} color={colors.flower} />
+      </View>
+      <View
+        pointerEvents="none"
+        style={[styles.deco, { top: 280, right: 38, opacity: 0.35 }]}
+      >
+        <Sparkle size={14} color={colors.sky} />
+      </View>
+      <View
+        pointerEvents="none"
+        style={[styles.deco, { bottom: 200, left: 48, opacity: 0.7 }]}
+      >
+        <Sparkle size={16} color={colors.skySoft} />
+      </View>
+      <View
+        pointerEvents="none"
+        style={[styles.deco, { bottom: 130, right: 70, opacity: 0.55 }]}
+      >
+        <Sparkle size={22} color="#FFB6C1" />
+      </View>
+
       <View style={styles.center}>
-        <View style={styles.iconCircle}>
-          <Text style={styles.iconEmoji}>📸</Text>
-          <Text style={styles.iconSmile}>😊</Text>
-        </View>
-        <Text style={styles.appName}>FaceGlow</Text>
+        <BrandMark size={140} />
+        <Text style={styles.appName}>笑顔チェッカー</Text>
+        <Text style={styles.subtitle}>きょうの顔、いい感じ。</Text>
       </View>
     </Animated.View>
   );
@@ -44,33 +83,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 32,
   },
-  iconCircle: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 28,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 18,
-    elevation: 8,
-  },
-  iconEmoji: {
-    fontSize: 52,
-  },
-  iconSmile: {
+  deco: {
     position: 'absolute',
-    bottom: 22,
-    right: 24,
-    fontSize: 26,
   },
   appName: {
     color: colors.primaryDeep,
-    fontSize: 38,
+    fontSize: 32,
     fontWeight: '600',
     letterSpacing: 1,
+    marginTop: 22,
+    marginBottom: 8,
+  },
+  subtitle: {
+    color: colors.textMid,
+    fontSize: 13,
+    fontWeight: '400',
   },
 });
