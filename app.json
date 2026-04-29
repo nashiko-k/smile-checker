@@ -13,6 +13,7 @@
       "bundleIdentifier": "com.nashiko.smilechecker",
       "infoPlist": {
         "NSCameraUsageDescription": "笑顔を検出するためにカメラを使用します。",
+        "NSUserTrackingUsageDescription": "パーソナライズされた広告を表示するために使用します。",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -54,6 +55,12 @@
         }
       ],
       "expo-asset",
+      [
+        "expo-tracking-transparency",
+        {
+          "userTrackingPermission": "パーソナライズされた広告を表示するために使用します。"
+        }
+      ],
       [
         "react-native-google-mobile-ads",
         {
