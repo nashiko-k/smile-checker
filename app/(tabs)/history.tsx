@@ -28,6 +28,8 @@ import {
   type HistoryEntry,
 } from '../../lib/history';
 import { loadProfile, type UserProfile } from '../../lib/profile';
+import { loadBaseline, type BaselineData } from '../../lib/baseline';
+import { analyzePartsFromData } from '../../lib/partsAnalysis';
 import {
   combinedHeartCount,
   smileFeedbackFromProb,
@@ -122,6 +124,7 @@ const calendarTheme = {
 export default function HistoryScreen() {
   const [entries, setEntries] = useState<HistoryEntry[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [baseline, setBaseline] = useState<BaselineData | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(
     dateStringFromTimestamp(Date.now()),
   );
@@ -134,9 +137,14 @@ export default function HistoryScreen() {
   const { flash } = useLocalSearchParams<{ flash?: string }>();
 
   const refresh = useCallback(async () => {
-    const [h, p] = await Promise.all([loadHistory(), loadProfile()]);
+    const [h, p, b] = await Promise.all([
+      loadHistory(),
+      loadProfile(),
+      loadBaseline(),
+    ]);
     setEntries(h);
     setProfile(p);
+    setBaseline(b);
   }, []);
 
   useFocusEffect(
@@ -301,6 +309,7 @@ export default function HistoryScreen() {
               key={entry.timestamp}
               entry={entry}
               profile={profile}
+              baseline={baseline}
               onPressImage={() => setModalImagePath(entry.imagePath)}
               onDelete={() => confirmDeleteEntry(entry)}
             />
@@ -528,14 +537,17 @@ function FaceAgeChart({
 function EntryCard({
   entry,
   profile,
+  baseline,
   onPressImage,
   onDelete,
 }: {
   entry: HistoryEntry;
   profile: UserProfile | null;
+  baseline: BaselineData | null;
   onPressImage: () => void;
   onDelete: () => void;
 }) {
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const smile = smileFeedbackFromProb(entry.smileProb);
   const diff =
     profile != null ? profile.actualAge - Math.round(entry.faceAge) : null;
@@ -549,6 +561,21 @@ function EntryCard({
         : diff === 0
           ? '年齢相応の素敵な表情'
           : '笑顔で撮り直すと変わるかも！';
+
+  const partItems = analyzePartsFromData(
+    {
+      smile: entry.smileProb,
+      leftEye: entry.leftEyeOpen,
+      rightEye: entry.rightEyeOpen,
+    },
+    baseline
+      ? {
+          smile: baseline.smilingProb,
+          leftEye: baseline.leftEyeOpen,
+          rightEye: baseline.rightEyeOpen,
+        }
+      : null,
+  );
 
   return (
     <View style={styles.entryCard}>
@@ -582,6 +609,35 @@ function EntryCard({
           </View>
         </View>
       </View>
+
+      {partItems.length > 0 && (
+        <View>
+          <TouchableOpacity
+            style={styles.entryAccordionHeader}
+            onPress={() => setDetailsOpen((v) => !v)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.entryAccordionHeaderText}>
+              詳しくみる {detailsOpen ? '▼' : '▶'}
+            </Text>
+          </TouchableOpacity>
+          {detailsOpen && (
+            <View style={styles.entryAccordionBody}>
+              {partItems.map((it) => (
+                <View key={it.key} style={styles.entryPartItem}>
+                  <Text style={styles.entryPartLabel}>{it.label}</Text>
+                  <Text style={styles.entryPartComment}>{it.comment}</Text>
+                  {it.comparison && (
+                    <Text style={styles.entryPartComparison}>
+                      {it.comparison}
+                    </Text>
+                  )}
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      )}
     </View>
   );
 }
@@ -680,6 +736,42 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   entryHearts: { marginTop: 4 },
+  entryAccordionHeader: {
+    paddingVertical: 8,
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  entryAccordionHeaderText: {
+    color: colors.primaryDeep,
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  entryAccordionBody: {
+    backgroundColor: colors.primaryLightest,
+    borderRadius: radius.md,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: colors.primaryLighter,
+    gap: 8,
+  },
+  entryPartItem: { paddingVertical: 2 },
+  entryPartLabel: {
+    color: colors.primaryDeep,
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  entryPartComment: {
+    color: colors.textDark,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  entryPartComparison: {
+    color: colors.textMid,
+    fontSize: 11,
+    marginTop: 2,
+  },
   retakeBtn: {
     backgroundColor: colors.primary,
     paddingVertical: 12,

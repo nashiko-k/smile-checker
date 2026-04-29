@@ -11,6 +11,8 @@ export type HistoryEntry = {
   smileProb: number;
   smileLevel: number; // 1-10
   imagePath: string;
+  leftEyeOpen?: number;
+  rightEyeOpen?: number;
 };
 
 export function dateStringFromTimestamp(ts: number): string {
@@ -61,7 +63,21 @@ function migrateEntry(raw: unknown): HistoryEntry | null {
       ? r.smileLevel
       : smileLevelFromProb(smileProb);
 
-  return { timestamp, date, faceAge, smileProb, smileLevel, imagePath };
+  const leftEyeOpen =
+    typeof r.leftEyeOpen === 'number' ? r.leftEyeOpen : undefined;
+  const rightEyeOpen =
+    typeof r.rightEyeOpen === 'number' ? r.rightEyeOpen : undefined;
+
+  return {
+    timestamp,
+    date,
+    faceAge,
+    smileProb,
+    smileLevel,
+    imagePath,
+    leftEyeOpen,
+    rightEyeOpen,
+  };
 }
 
 export async function addHistoryEntry(
@@ -69,6 +85,8 @@ export async function addHistoryEntry(
     faceAge: number;
     smileProb: number;
     smileLevel: number;
+    leftEyeOpen?: number;
+    rightEyeOpen?: number;
   },
   sourceImageUri: string,
 ): Promise<HistoryEntry> {

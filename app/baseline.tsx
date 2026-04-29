@@ -47,15 +47,15 @@ type Analysis = {
   rightEye: number;
 };
 
-type Phase = 'idle' | 'countdown' | 'measuring' | 'result';
+type Phase = 'intro' | 'idle' | 'countdown' | 'measuring' | 'result';
 
 type CaptureResult = {
   photoPath: string;
   analysis: Analysis;
 };
 
-const MEASURE_DURATION_MS = 2000;
-const MEASURE_TARGET_SAMPLES = 8;
+const MEASURE_DURATION_MS = 1250;
+const MEASURE_TARGET_SAMPLES = 5;
 
 function wait(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
@@ -67,7 +67,7 @@ export default function BaselineScreen() {
   const cameraRef = useRef<Camera>(null);
   const samplesRef = useRef<Analysis[] | null>(null);
 
-  const [phase, setPhase] = useState<Phase>('idle');
+  const [phase, setPhase] = useState<Phase>('intro');
   const [countdown, setCountdown] = useState(3);
   const [measureProgress, setMeasureProgress] = useState(0);
   const [result, setResult] = useState<CaptureResult | null>(null);
@@ -325,99 +325,99 @@ export default function BaselineScreen() {
   const modelError = ageModel.state === 'error' ? ageModel.error.message : null;
   const canCapture = phase === 'idle' && !modelLoading && modelError == null;
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.headerArea}>
-        <Text style={styles.headerTitle}>基準となる顔を撮影しましょう</Text>
-        <View style={styles.explainCard}>
-          <Text style={styles.explainTitle}>基準の顔とは？</Text>
-          <Text style={styles.explainBody}>
+  if (phase === 'intro') {
+    return (
+      <View style={styles.introContainer}>
+        <Text style={styles.introTitle}>基準となる顔を撮影しましょう</Text>
+        <View style={styles.introCard}>
+          <Text style={styles.introCardTitle}>基準の顔とは？</Text>
+          <Text style={styles.introCardBody}>
             ふだんのリラックスした表情を記録します。
             毎日の撮影と比較することで、笑顔や表情の変化がわかるようになります。
           </Text>
+          <Text style={styles.introTipsTitle}>撮影のコツ</Text>
+          <Text style={styles.introTipsLine}>・リラックスした自然な表情で</Text>
+          <Text style={styles.introTipsLine}>・できればノーメイクで</Text>
+          <Text style={styles.introTipsLine}>
+            ・毎回同じ場所・同じ明るさで撮ると比較しやすくなります
+          </Text>
         </View>
-      </View>
-
-      <View style={styles.cameraArea}>
-        <Camera
-          ref={cameraRef}
-          style={StyleSheet.absoluteFill}
-          device={device}
-          isActive={phase !== 'result'}
-          photo={true}
-          frameProcessor={frameProcessor}
-          pixelFormat="yuv"
-        />
-        <View pointerEvents="none" style={styles.softFocus} />
-
-        <View pointerEvents="none" style={styles.guideContainer}>
-          <View style={styles.guideOval} />
-          {phase === 'idle' && (
-            <Text style={styles.guideText}>
-              枠に顔を合わせてください
-            </Text>
-          )}
-        </View>
-
-        {phase === 'countdown' && (
-          <View pointerEvents="none" style={styles.countdownOverlay}>
-            <Text style={styles.countdownHint}>
-              リラックスした表情でお願いします
-            </Text>
-            <Text style={styles.countdownNumber}>{countdown}</Text>
-          </View>
-        )}
-
-        {phase === 'measuring' && (
-          <View pointerEvents="none" style={styles.countdownOverlay}>
-            <Text style={styles.countdownHint}>
-              測定中・リラックスした表情のままで
-            </Text>
-            <View style={styles.progressBarBg}>
-              <View
-                style={[
-                  styles.progressBarFill,
-                  { width: `${Math.round(measureProgress * 100)}%` },
-                ]}
-              />
-            </View>
-          </View>
-        )}
-      </View>
-
-      <View style={styles.footerArea}>
         {modelLoading && (
           <Text style={styles.status}>年齢モデルを読み込み中...</Text>
         )}
         {modelError && (
           <Text style={styles.status}>モデル読込エラー: {modelError}</Text>
         )}
-        {phase === 'idle' && (
-          <View style={styles.tipsBox}>
-            <Text style={styles.tipsTitle}>ベースラインのコツ</Text>
-            <Text style={styles.tipsLine}>・リラックスした自然な表情で</Text>
-            <Text style={styles.tipsLine}>・できればノーメイクで</Text>
-            <Text style={styles.tipsLine}>
-              ・毎回同じ場所・同じ明るさで撮ると比較しやすくなります
-            </Text>
-          </View>
-        )}
         <TouchableOpacity
-          style={[styles.primaryBtn, !canCapture && styles.btnDisabled]}
-          onPress={handleCapture}
-          disabled={!canCapture}
+          style={[styles.primaryBtn, modelLoading && styles.btnDisabled]}
+          onPress={() => setPhase('idle')}
+          disabled={modelLoading || modelError != null}
         >
-          <Text style={styles.primaryBtnText}>
-            {phase === 'idle' ? '撮影する' : '...'}
-          </Text>
+          <Text style={styles.primaryBtnText}>撮影に進む</Text>
         </TouchableOpacity>
       </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <Camera
+        ref={cameraRef}
+        style={StyleSheet.absoluteFill}
+        device={device}
+        isActive={phase !== 'result'}
+        photo={true}
+        frameProcessor={frameProcessor}
+        pixelFormat="yuv"
+      />
+      <View pointerEvents="none" style={styles.softFocus} />
+
+      <View pointerEvents="none" style={styles.guideContainer}>
+        <View style={styles.guideOval} />
+      </View>
+
+      {phase === 'countdown' && (
+        <View pointerEvents="none" style={styles.countdownOverlay}>
+          <Text style={styles.countdownHint}>
+            リラックスした表情でお願いします
+          </Text>
+          <Text style={styles.countdownNumber}>{countdown}</Text>
+        </View>
+      )}
+
+      {phase === 'measuring' && (
+        <View pointerEvents="none" style={styles.countdownOverlay}>
+          <Text style={styles.countdownHint}>
+            測定中・リラックスした表情のままで
+          </Text>
+          <View style={styles.progressBarBg}>
+            <View
+              style={[
+                styles.progressBarFill,
+                { width: `${Math.round(measureProgress * 100)}%` },
+              ]}
+            />
+          </View>
+        </View>
+      )}
+
+      {phase === 'idle' && (
+        <View style={styles.shutterArea}>
+          <TouchableOpacity
+            style={[styles.primaryBtn, !canCapture && styles.btnDisabled]}
+            onPress={handleCapture}
+            disabled={!canCapture}
+          >
+            <Text style={styles.primaryBtnText}>撮影する</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bgMain },
+  container: { flex: 1, backgroundColor: '#000' },
   center: {
     flex: 1,
     alignItems: 'center',
@@ -425,50 +425,60 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: colors.bgMain,
   },
-  headerArea: {
-    paddingHorizontal: 16,
-    paddingTop: 56,
-    paddingBottom: 12,
+  introContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
     backgroundColor: colors.bgMain,
   },
-  headerTitle: {
+  introTitle: {
     color: colors.primaryDeep,
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: 20,
   },
-  explainCard: {
+  introCard: {
     backgroundColor: colors.primaryLightest,
-    borderRadius: radius.lg,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderRadius: radius.xl,
+    paddingHorizontal: 18,
+    paddingVertical: 18,
     borderWidth: 1,
     borderColor: colors.primaryLighter,
+    width: '100%',
+    maxWidth: 360,
+    marginBottom: 24,
   },
-  explainTitle: {
+  introCardTitle: {
+    color: colors.primaryDeep,
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  introCardBody: {
+    color: colors.textDark,
+    fontSize: 13,
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  introTipsTitle: {
     color: colors.primaryDeep,
     fontSize: 13,
     fontWeight: '600',
     marginBottom: 4,
   },
-  explainBody: {
+  introTipsLine: {
     color: colors.textDark,
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 20,
   },
-  cameraArea: {
-    flex: 1,
-    position: 'relative',
-    backgroundColor: '#000',
-    overflow: 'hidden',
-  },
-  footerArea: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 24,
+  shutterArea: {
+    position: 'absolute',
+    bottom: 36,
+    left: 0,
+    right: 0,
     alignItems: 'center',
-    backgroundColor: colors.bgMain,
   },
   softFocus: {
     ...StyleSheet.absoluteFillObject,
@@ -480,42 +490,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   guideOval: {
-    width: 240,
-    height: 320,
-    borderRadius: 160,
+    width: 260,
+    height: 340,
+    borderRadius: 170,
     borderWidth: 3,
     borderColor: 'rgba(255,255,255,0.9)',
-  },
-  guideText: {
-    color: colors.white,
-    fontSize: 13,
-    marginTop: 14,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: radius.sm,
-  },
-  tipsBox: {
-    backgroundColor: colors.primaryLightest,
-    borderWidth: 1,
-    borderColor: colors.primaryLighter,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: radius.lg,
-    marginBottom: 14,
-    maxWidth: 360,
-    alignSelf: 'stretch',
-  },
-  tipsTitle: {
-    color: colors.primaryDeep,
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 6,
-  },
-  tipsLine: {
-    color: colors.textDark,
-    fontSize: 13,
-    lineHeight: 18,
   },
   countdownOverlay: {
     ...StyleSheet.absoluteFillObject,

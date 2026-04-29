@@ -36,6 +36,7 @@ import {
 } from '../../lib/smile';
 import { trimmedMedian } from '../../lib/measure';
 import { beautifyPhoto } from '../../lib/beautify';
+import { analyzePartsFromData } from '../../lib/partsAnalysis';
 import { incrementCaptureCount, shouldShowInterstitial } from '../../lib/ads';
 import { maybeShowInterstitial } from '../../lib/interstitial';
 import { colors, radius } from '../../lib/theme';
@@ -70,8 +71,8 @@ type CheckResult = {
   combinedMessage: string;
 };
 
-const MEASURE_DURATION_MS = 2000;
-const MEASURE_TARGET_SAMPLES = 8;
+const MEASURE_DURATION_MS = 1250;
+const MEASURE_TARGET_SAMPLES = 5;
 
 function wait(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
@@ -92,6 +93,7 @@ export default function CheckScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [setupLoaded, setSetupLoaded] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   useEffect(() => {
     if (!hasPermission) requestPermission();
@@ -105,6 +107,7 @@ export default function CheckScreen() {
       setPhase('standby');
       setResult(null);
       setSaved(false);
+      setDetailsOpen(false);
       Promise.all([loadBaseline(), loadProfile()]).then(([b, p]) => {
         if (active) {
           setBaseline(b);
@@ -294,6 +297,7 @@ export default function CheckScreen() {
     captureSessionRef.current++;
     setResult(null);
     setSaved(false);
+    setDetailsOpen(false);
     setPhase('standby');
   }
 
@@ -306,6 +310,8 @@ export default function CheckScreen() {
           faceAge: result.analysis.age!,
           smileProb: result.analysis.smile,
           smileLevel: smile.level,
+          leftEyeOpen: result.analysis.leftEye,
+          rightEyeOpen: result.analysis.rightEye,
         },
         result.photoPath,
       );
@@ -451,6 +457,25 @@ export default function CheckScreen() {
               {result.combinedMessage}
             </Text>
           )}
+
+          <PartsAccordion
+            open={detailsOpen}
+            onToggle={() => setDetailsOpen((v) => !v)}
+            items={analyzePartsFromData(
+              {
+                smile: result.analysis.smile,
+                leftEye: result.analysis.leftEye,
+                rightEye: result.analysis.rightEye,
+              },
+              baseline
+                ? {
+                    smile: baseline.smilingProb,
+                    leftEye: baseline.leftEyeOpen,
+                    rightEye: baseline.rightEyeOpen,
+                  }
+                : null,
+            )}
+          />
         </View>
 
         <View style={styles.resultActions}>
@@ -550,6 +575,44 @@ export default function CheckScreen() {
           >
             <Text style={styles.primaryBtnText}>撮影する</Text>
           </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
+}
+
+function PartsAccordion({
+  open,
+  onToggle,
+  items,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  items: ReturnType<typeof analyzePartsFromData>;
+}) {
+  if (items.length === 0) return null;
+  return (
+    <View style={styles.accordion}>
+      <TouchableOpacity
+        style={styles.accordionHeader}
+        onPress={onToggle}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.accordionHeaderText}>
+          詳しくみる {open ? '▼' : '▶'}
+        </Text>
+      </TouchableOpacity>
+      {open && (
+        <View style={styles.accordionBody}>
+          {items.map((it) => (
+            <View key={it.key} style={styles.partItem}>
+              <Text style={styles.partLabel}>{it.label}</Text>
+              <Text style={styles.partComment}>{it.comment}</Text>
+              {it.comparison && (
+                <Text style={styles.partComparison}>{it.comparison}</Text>
+              )}
+            </View>
+          ))}
         </View>
       )}
     </View>
@@ -793,6 +856,48 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     width: '100%',
+  },
+  accordion: {
+    width: '100%',
+    maxWidth: 360,
+    alignSelf: 'center',
+  },
+  accordionHeader: {
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  accordionHeaderText: {
+    color: colors.primaryDeep,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  accordionBody: {
+    backgroundColor: colors.primaryLightest,
+    borderRadius: radius.lg,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: colors.primaryLighter,
+    gap: 10,
+  },
+  partItem: {
+    paddingVertical: 4,
+  },
+  partLabel: {
+    color: colors.primaryDeep,
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  partComment: {
+    color: colors.textDark,
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  partComparison: {
+    color: colors.textMid,
+    fontSize: 12,
+    marginTop: 2,
   },
   msg: {
     color: colors.textDark,
