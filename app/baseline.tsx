@@ -240,7 +240,7 @@ export default function BaselineScreen() {
         },
         result.photoPath,
       );
-      Alert.alert('完了', 'ベースラインを保存しました', [
+      Alert.alert('完了', '基準の顔を保存しました', [
         { text: 'OK', onPress: () => router.back() },
       ]);
     } catch (e) {
@@ -283,7 +283,7 @@ export default function BaselineScreen() {
         />
         <View style={styles.resultWash} pointerEvents="none" />
         <View style={styles.resultContent}>
-          <Text style={styles.resultTitle}>この顔をベースラインにしますか？</Text>
+          <Text style={styles.resultTitle}>この顔を基準の顔にしますか？</Text>
           <View style={styles.resultRow}>
             <View style={styles.metric}>
               <Text style={styles.metricLabel}>推定年齢</Text>

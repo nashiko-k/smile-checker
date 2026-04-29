@@ -90,7 +90,7 @@ export default function SettingsScreen() {
   };
 
   const confirmClearBaseline = () => {
-    Alert.alert('ベースライン削除', '本当に削除しますか？', [
+    Alert.alert('基準の顔を削除', '本当に削除しますか？', [
       { text: 'キャンセル', style: 'cancel' },
       {
         text: '削除',
@@ -171,9 +171,9 @@ export default function SettingsScreen() {
         )}
       </View>
 
-      {/* ベースライン */}
+      {/* 基準の顔 */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>ベースライン</Text>
+        <Text style={styles.cardTitle}>基準の顔</Text>
         {baseline ? (
           <>
             <Text style={styles.cardBody}>
@@ -202,7 +202,7 @@ export default function SettingsScreen() {
           style={styles.dangerBtn}
           onPress={confirmClearBaseline}
         >
-          <Text style={styles.dangerBtnText}>ベースラインを削除</Text>
+          <Text style={styles.dangerBtnText}>基準の顔を削除</Text>
         </TouchableOpacity>
       )}
 

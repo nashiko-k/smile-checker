@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -423,6 +424,11 @@ export default function CheckScreen() {
     return (
       <View style={styles.resultContainer}>
         <ResultBackgroundWash />
+        <ScrollView
+          style={styles.resultScroll}
+          contentContainerStyle={styles.resultScrollContent}
+          showsVerticalScrollIndicator={false}
+        >
         <View style={styles.resultBody}>
           <View style={styles.factBlock}>
             <Text style={styles.factLabel}>きょうの顔年齢は</Text>
@@ -499,6 +505,7 @@ export default function CheckScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+        </ScrollView>
       </View>
     );
   }
@@ -800,15 +807,19 @@ const styles = StyleSheet.create({
   resultContainer: {
     flex: 1,
     backgroundColor: colors.bgMain,
+  },
+  resultScroll: { flex: 1 },
+  resultScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
     paddingHorizontal: 24,
     paddingTop: 64,
     paddingBottom: 32,
   },
   resultBody: {
-    flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
     gap: 28,
+    marginBottom: 28,
   },
   factBlock: { alignItems: 'center' },
   factLabel: { color: colors.textMid, fontSize: 14, fontWeight: '400' },
