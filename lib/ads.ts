@@ -7,7 +7,6 @@ export const INTERSTITIAL_AD_UNIT_ID =
   'ca-app-pub-6109118020281273/8721883145';
 
 // 開発中はテスト用ID。本番IDをテスト中にクリックするとアカウント停止リスクがある。
-// 開発に戻すときは上記をコメントアウトして以下を有効化する。
 // export const BANNER_AD_UNIT_ID = 'ca-app-pub-3940256099942544/2435281174';
 // export const INTERSTITIAL_AD_UNIT_ID = 'ca-app-pub-3940256099942544/4411468910';
 
