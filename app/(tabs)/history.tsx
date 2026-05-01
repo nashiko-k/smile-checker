@@ -605,6 +605,7 @@ function EntryCard({
           </Text>
           {diffLabel && <Text style={styles.entryDiff}>{diffLabel}</Text>}
           <View style={styles.entryHearts}>
+            <Text style={styles.entryHeartsLabel}>笑顔度：</Text>
             <HeartRow filled={totalHearts} size={18} gap={3} />
           </View>
         </View>
@@ -735,7 +736,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 6,
   },
-  entryHearts: { marginTop: 4 },
+  entryHearts: {
+    marginTop: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  entryHeartsLabel: {
+    color: colors.textDark,
+    fontSize: 13,
+    fontWeight: '500',
+  },
   entryAccordionHeader: {
     paddingVertical: 8,
     alignItems: 'center',

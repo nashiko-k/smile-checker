@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 1024x1024 のアプリアイコンを生成して assets/icon.png に書き出す。
-// components/BrandMark.tsx の SVG をそのまま 5倍スケールして中央配置、
-// 背景はピンクの縦グラデーション（#FFE0E8 → #FF85A2）。
+// components/BrandMark.tsx の SVG を 6倍スケール（840×840, アイコン全体の約82%）で
+// 中央配置し、背景はピンクの縦グラデーション（#FFE0E8 → #FF85A2）。
 //
 // 使い方（sharp はアプリ本体に不要なため package.json には含めない）:
 //   npm install --no-save sharp
@@ -33,8 +33,8 @@ const svg = `
   </defs>
   <rect width="1024" height="1024" fill="url(#bg)"/>
 
-  <!-- BrandMark (140x140 viewBox) を 5x スケールして中央 (162, 162) に配置 -->
-  <g transform="translate(162, 162) scale(5)">
+  <!-- BrandMark (140x140 viewBox) を 6x スケール（840×840）で中央 (92, 92) に配置 -->
+  <g transform="translate(92, 92) scale(6)">
     <circle cx="70" cy="70" r="70" fill="#FF85A2"/>
     <rect x="34" y="48" width="72" height="52" rx="10" fill="#FFFFFF"/>
     <rect x="56" y="42" width="28" height="10" rx="3" fill="#FFFFFF"/>

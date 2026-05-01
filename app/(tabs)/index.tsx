@@ -456,7 +456,10 @@ export default function CheckScreen() {
             </View>
           )}
 
-          <HeartRow filled={totalHearts} size={36} gap={6} />
+          <View style={styles.heartsRow}>
+            <Text style={styles.heartsLabel}>笑顔度：</Text>
+            <HeartRow filled={totalHearts} size={36} gap={6} />
+          </View>
 
           {result.combinedMessage.length > 0 && (
             <Text style={styles.combinedMessage}>
@@ -867,6 +870,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     width: '100%',
+  },
+  heartsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  heartsLabel: {
+    color: colors.textDark,
+    fontSize: 16,
+    fontWeight: '500',
   },
   accordion: {
     width: '100%',
