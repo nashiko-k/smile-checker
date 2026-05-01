@@ -13,9 +13,10 @@ import {
   Camera,
   runAtTargetFps,
   useCameraDevice,
-  useCameraPermission,
   useFrameProcessor,
 } from 'react-native-vision-camera';
+import { useCameraPermissionStatus } from '../lib/cameraPermission';
+import { CameraPermissionDenied } from '../components/CameraPermissionDenied';
 import {
   useFaceDetector,
   type FrameFaceDetectionOptions,
@@ -63,7 +64,9 @@ function wait(ms: number): Promise<void> {
 
 export default function BaselineScreen() {
   const device = useCameraDevice('front');
-  const { hasPermission, requestPermission } = useCameraPermission();
+  const { status: permissionStatus, request: requestPermission } =
+    useCameraPermissionStatus();
+  const hasPermission = permissionStatus === 'granted';
   const cameraRef = useRef<Camera>(null);
   const samplesRef = useRef<Analysis[] | null>(null);
 
@@ -74,8 +77,10 @@ export default function BaselineScreen() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!hasPermission) requestPermission();
-  }, [hasPermission, requestPermission]);
+    if (permissionStatus === 'not-determined') {
+      requestPermission();
+    }
+  }, [permissionStatus, requestPermission]);
 
   const { detectFaces } = useFaceDetector(faceOptions);
   const ageModel = useTensorflowModel(
@@ -253,15 +258,11 @@ export default function BaselineScreen() {
     }
   }
 
+  if (permissionStatus === 'denied' || permissionStatus === 'restricted') {
+    return <CameraPermissionDenied />;
+  }
   if (!hasPermission) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.msg}>カメラの許可が必要です</Text>
-        <TouchableOpacity style={styles.primaryBtn} onPress={requestPermission}>
-          <Text style={styles.primaryBtnText}>許可する</Text>
-        </TouchableOpacity>
-      </View>
-    );
+    return <View style={styles.center} />;
   }
 
   if (!device) {
