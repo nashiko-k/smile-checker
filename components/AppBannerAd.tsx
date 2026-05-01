@@ -3,12 +3,13 @@ import {
   BannerAd,
   BannerAdSize,
 } from 'react-native-google-mobile-ads';
-import { BANNER_AD_UNIT_ID } from '../lib/ads';
+import { BANNER_AD_UNIT_ID, isNonPersonalizedOnly } from '../lib/ads';
 import { colors } from '../lib/theme';
 
 /**
  * タブバーのすぐ上に置く共通バナー。
  * ANCHORED_ADAPTIVE_BANNER は端末幅にフィットする推奨サイズ。
+ * ATT 許可状態に応じてパーソナライズ広告を切り替える。
  */
 export function AppBannerAd() {
   return (
@@ -17,7 +18,7 @@ export function AppBannerAd() {
         unitId={BANNER_AD_UNIT_ID}
         size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
         requestOptions={{
-          requestNonPersonalizedAdsOnly: true,
+          requestNonPersonalizedAdsOnly: isNonPersonalizedOnly(),
         }}
       />
     </View>

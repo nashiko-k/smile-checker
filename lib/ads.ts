@@ -11,6 +11,17 @@ export const INTERSTITIAL_AD_UNIT_ID =
 // export const BANNER_AD_UNIT_ID = 'ca-app-pub-3940256099942544/2435281174';
 // export const INTERSTITIAL_AD_UNIT_ID = 'ca-app-pub-3940256099942544/4411468910';
 
+// ── ATT (App Tracking Transparency) ─────────────────────────────────
+// requestTrackingPermissionsAsync() の結果に応じて、広告リクエストを
+// パーソナライズ / 非パーソナライズに切り替える。デフォルトは安全側で true。
+let _nonPersonalizedOnly = true;
+export function setTrackingPermission(granted: boolean): void {
+  _nonPersonalizedOnly = !granted;
+}
+export function isNonPersonalizedOnly(): boolean {
+  return _nonPersonalizedOnly;
+}
+
 // ── 撮影回数カウンタ（インタースティシャル頻度判定用）────────────────
 const COUNT_KEY = 'capture_count';
 const INTERSTITIAL_FREQUENCY = 10;

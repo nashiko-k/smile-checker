@@ -2,22 +2,37 @@ import {
   AdEventType,
   InterstitialAd,
 } from 'react-native-google-mobile-ads';
-import { INTERSTITIAL_AD_UNIT_ID } from './ads';
+import { INTERSTITIAL_AD_UNIT_ID, isNonPersonalizedOnly } from './ads';
 
 let interstitial: InterstitialAd | null = null;
 let isLoaded = false;
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
+const RETRY_DELAY_MS = 30000;
 
-/** アプリ起動時に1回だけ呼ぶ。広告枠を裏で読み込む。 */
+function scheduleRetry(ad: InterstitialAd): void {
+  if (retryTimer) return;
+  retryTimer = setTimeout(() => {
+    retryTimer = null;
+    if (!isLoaded) {
+      try {
+        ad.load();
+      } catch {}
+    }
+  }, RETRY_DELAY_MS);
+}
+
+/** アプリ起動時に1回だけ呼ぶ。広告枠を裏で読み込む。失敗時は自動リトライ。 */
 export function initInterstitial(): void {
   if (interstitial) return;
   const ad = InterstitialAd.createForAdRequest(INTERSTITIAL_AD_UNIT_ID, {
-    requestNonPersonalizedAdsOnly: true,
+    requestNonPersonalizedAdsOnly: isNonPersonalizedOnly(),
   });
   ad.addAdEventListener(AdEventType.LOADED, () => {
     isLoaded = true;
   });
   ad.addAdEventListener(AdEventType.ERROR, () => {
     isLoaded = false;
+    scheduleRetry(ad);
   });
   ad.load();
   interstitial = ad;

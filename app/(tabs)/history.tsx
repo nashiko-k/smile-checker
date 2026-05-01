@@ -95,12 +95,16 @@ function nextMonthFirstDay(ym: string): string {
   return `${ny}-${String(nm).padStart(2, '0')}-01`;
 }
 
-function heartsFromLevel(smileLevel: number): number {
-  if (smileLevel >= 10) return 5;
-  if (smileLevel >= 8) return 4;
-  if (smileLevel >= 6) return 3;
-  if (smileLevel >= 4) return 2;
-  return 1;
+// 結果画面と同じ算出: 若見え度 × 笑顔度の合算ハート数
+function totalHeartsForEntry(
+  entry: HistoryEntry,
+  profile: UserProfile | null,
+): number {
+  const smile = smileFeedbackFromProb(entry.smileProb);
+  const diff =
+    profile != null ? profile.actualAge - Math.round(entry.faceAge) : null;
+  const youngScore = diff != null ? youngScoreFromDiff(diff) : 3;
+  return combinedHeartCount(youngScore, smile.filledHearts);
 }
 
 const screenWidth = Dimensions.get('window').width;
@@ -271,13 +275,13 @@ export default function HistoryScreen() {
           </Text>
           {entry && (
             <Text style={styles.dayHearts}>
-              {'♥'.repeat(heartsFromLevel(entry.smileLevel))}
+              {'♥'.repeat(totalHeartsForEntry(entry, profile))}
             </Text>
           )}
         </TouchableOpacity>
       );
     },
-    [latestByDate, selectedDate, flashDate, flashAnim],
+    [latestByDate, selectedDate, flashDate, flashAnim, profile],
   );
 
   return (
@@ -551,7 +555,8 @@ function EntryCard({
   const smile = smileFeedbackFromProb(entry.smileProb);
   const diff =
     profile != null ? profile.actualAge - Math.round(entry.faceAge) : null;
-  const youngScore = diff != null ? youngScoreFromDiff(diff) : 1;
+  // 結果画面 (index.tsx) と同じデフォルト (3 = 中立) で算出
+  const youngScore = diff != null ? youngScoreFromDiff(diff) : 3;
   const totalHearts = combinedHeartCount(youngScore, smile.filledHearts);
   const diffLabel =
     diff == null

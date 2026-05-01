@@ -6,6 +6,7 @@ import mobileAds from 'react-native-google-mobile-ads';
 import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 import { SplashOverlay } from '../components/SplashOverlay';
 import { initInterstitial } from '../lib/interstitial';
+import { setTrackingPermission } from '../lib/ads';
 
 export default function RootLayout() {
   const [splashVisible, setSplashVisible] = useState(true);
@@ -15,7 +16,8 @@ export default function RootLayout() {
       // ATT (App Tracking Transparency) の許可ダイアログを先に表示。
       // 許可/拒否のいずれでも AdMob は初期化する（拒否時は非パーソナライズ広告）。
       try {
-        await requestTrackingPermissionsAsync();
+        const { status } = await requestTrackingPermissionsAsync();
+        setTrackingPermission(status === 'granted');
       } catch {}
       try {
         await mobileAds().initialize();
