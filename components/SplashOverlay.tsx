@@ -69,7 +69,7 @@ export function SplashOverlay({ onDone }: { onDone: () => void }) {
 
       <View style={styles.center}>
         <BrandMark size={140} />
-        <Text style={styles.appName}>笑顔チェッカー</Text>
+        <Text style={styles.appName}>顔年齢チェッカー</Text>
         <Text style={styles.subtitle}>きょうの顔、いい感じ。</Text>
       </View>
     </Animated.View>
